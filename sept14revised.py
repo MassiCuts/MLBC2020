@@ -5,11 +5,11 @@ from sklearn.datasets import make_blobs
 from numpy.random import randint as rand
 from time import time_ns as time
 import math
+from sklearn import datasets
+
 
 # grabs
 # [INFO] used only in plotDataSet()
-
-
 def getValues(X, y, selectedLabel=0) :
 	x1s = []
 	x2s = []
@@ -42,8 +42,6 @@ def sign(x) :
 # 			Else update weight wn associated with xn by adding to it (yn – f(xn))*xn
 def train(weights, X, y, iterations=10) :
 	start = time()  # capture the start time in nanoseconds
-	epoch = 0
-	accuracy_list = []
 	for i in range(iterations) :   # perform training for a given number of iterations
 		for sample, label in zip(X, y) :   # for each sample and its corresponding label do the following:
 			diff = label - predict(weights, sample)    # check if their is a difference of the label and the prediction
@@ -56,41 +54,17 @@ def train(weights, X, y, iterations=10) :
 				weights[0] = w1 + diff * x1  # update the first weight
 				weights[1] = w2 + diff * x2  # update the second weight
 				weights[2] = b + diff # I consider b a weight
-				
-			epoch += 1
-			
-			current_accuracy = accuracy()
-			print(f"Accuracy = {current_accuracy}, epoch = {epoch}")
-			#accuracy_list.append(current_accuracy)
-				
-			if current_accuracy == 1:
-				break
-			
 	end = time() # capture the end time in nanoseconds
-	return ((end - start))  # return the difference in time
-
-#Accuracy metric
+	return end - start # return the difference in time
 
 
-def accuracy():
-	correct_count = 0
-	total = len(X)
-	ycount = 0
-	for sample in X:
-		prediction = predict(weights,sample)
-		label = y[ycount]
-		if prediction == label:
-			correct_count += 1
-		ycount += 1
-	return(correct_count/total)
-
-# Trains the dataset array of samples 'X' and corresponding label array 'y'
+# Predicts a sample based on the linear separator defined by 'weights'
 def predict (weights, sample) :
 	[x1, x2] = sample # fetch the sample's components
 	[w1, w2, b] = weights  # fetch the weight's components
 	return sign( x1*w1 + x2*w2 + b ) # return the prediction
 
-#
+# Tests the dataset array of samples 'X' predictions against the true label array 'y' off of specified weights
 def test(weights, X, y) :
 	totalSize = len(X)
 	correct = 0
@@ -102,17 +76,16 @@ def test(weights, X, y) :
 
 # Finding min and max of data sets to set line length correctly
 def linelength(X) :
-	minX = min(min(X))
-	maxX = max(max(X))
+	minX = 0
+	maxX = 0
 	for i in range(len(X)):
-		for j in range(0,1):
-			if X[i][j] < minX:
-				minX = X[i][0]
-			elif X[i][j] > maxX:
-				maxX = X[i][0]
-			else:
-				minX = minX
-				maxX = maxX
+		if X[i][0] < minX:
+			minX = X[i][0]
+		elif X[i][0] > maxX:
+			maxX = X[i][0]
+		else:
+			minX = minX
+			maxX = maxX
 	minX = math.floor(minX)
 	maxX = math.ceil(maxX)
 	return minX,maxX
@@ -134,13 +107,13 @@ def plotSeparator(weights, start=-10, end=10) :
 	if w2 == 0 :
 		m = - w2 / w1
 		b = - b / w1
-		y = list(range(start, end+1))
+		y = list(range(start, end))
 		x = [m * yi + b for yi in y]
 		placement = "to the left"
 	else :
 		m = - w1 / w2
 		b = - b / w2
-		x = list(range(start, end+1))
+		x = list(range(start, end))
 		y = [m * xi + b for xi in x]
 		if w2 < 0 :
 			placement = "below"
@@ -156,31 +129,19 @@ def plotSeparator(weights, start=-10, end=10) :
 
 # Main function
 if __name__ == "__main__" :
-	import csv
 
-	with open('iris_2.data') as csvfile:
-		readCSV = csv.reader(csvfile, delimiter=',')
-		X = []
-		y= []
-		for row in readCSV:
-			Xi = [float(row[0]), float(row[1])]
-			yi = row[4]
+	# PART 1 ------------------------------------------------------
+	response = input('Provide a number to use as a seed: ') # Set Seed
+	SEED = rand(response) 
+	STD  = .2  # Set Standard Deviation
+	ITERATIONS = 2  # Set Number of iterations
 
-			X.append(Xi)
-			y.append(yi)
-		for i in range(len(y)):
-			if y[i]=='Iris-setosa':
-				y[i]=0
-			elif y[i]=='Iris-virginica':
-				y[i]=1
-	#PART 1 ------------------------------------------------------
-#	response = input('Provide a number to use as a seed: ') # Set Seed
-#	SEED = rand(response)
-#	STD  = .2  # Set Standard Deviation
-	ITERATIONS = 2000  # Set Number of iterations
+	# Import the iris dataset to play with
+	iris = datasets.load_iris()
+	X = iris.data[:, :2]  # we only take the first two features.
+	y = iris.target
+	print(y)
 
-	# Gen DataSet :
-#	X, y = make_blobs(n_samples=100, centers=2, cluster_std=STD, random_state=SEED)
 	# Initialize Weights :
 	w1 = 0
 	w2 = 0
@@ -196,11 +157,10 @@ if __name__ == "__main__" :
 
 	# Plot Linear Separator :
 	minX, maxX = linelength(X)
-	print(minX,maxX)
 	plotSeparator(weights, start=minX, end=maxX)
 	
 	# Show Plot
 	plt.show()
 
-
-
+	
+	
